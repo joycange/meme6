@@ -400,7 +400,7 @@ fn (mut p Parser) fn_decl() ast.FnDecl {
 				name: param.name
 				typ: param.typ
 				is_mut: param.is_mut
-				is_auto_deref: param.is_mut || param.is_auto_rec
+				is_auto_deref: param.is_mut
 				is_stack_obj: is_stack_obj
 				pos: param.pos
 				is_used: true
@@ -629,6 +629,8 @@ run them via `v file.v` instead',
 	return fn_decl
 }
 
+const warn_on_non_reference_receiver_with_more_than_8_fields = os.getenv('VWARN_FOR_NONREF_RECEIVER_WITH_MORE_THAN_8_FIELDS').bool() // use `VWARN_FOR_NONREF_RECEIVER_WITH_MORE_THAN_8_FIELDS=true ./v file.v` to activate
+
 fn (mut p Parser) fn_receiver(mut params []ast.Param, mut rec ReceiverParsingInfo) ! {
 	p.inside_receiver_param = true
 	defer {
@@ -686,14 +688,14 @@ fn (mut p Parser) fn_receiver(mut params []ast.Param, mut rec ReceiverParsingInf
 	if is_atomic {
 		rec.typ = rec.typ.set_flag(.atomic_f)
 	}
-	// optimize method `automatic use fn (a &big_foo) instead of fn (a big_foo)`
-	type_sym := p.table.sym(rec.typ)
-	mut is_auto_rec := false
-	if type_sym.kind == .struct_ {
-		info := type_sym.info as ast.Struct
-		if !rec.is_mut && !rec.typ.is_ptr() && info.fields.len > 8 {
-			rec.typ = rec.typ.ref()
-			is_auto_rec = true
+	if parser.warn_on_non_reference_receiver_with_more_than_8_fields {
+		type_sym := p.table.sym(rec.typ)
+		if type_sym.kind == .struct_ {
+			info := type_sym.info as ast.Struct
+			if !rec.is_mut && !rec.typ.is_ptr() && info.fields.len > 8 {
+				p.warn_with_pos('automatic fn (a &big_foo) instead of fn (a big_foo), is no longer supported',
+					rec.type_pos)
+			}
 		}
 	}
 
@@ -703,20 +705,12 @@ fn (mut p Parser) fn_receiver(mut params []ast.Param, mut rec ReceiverParsingInf
 
 	p.check(.rpar)
 
-	if is_auto_rec && p.tok.kind != .name {
-		// Disable the auto-reference conversion for methodlike operators like ==, <=, > etc,
-		// since their parameters and receivers, *must* always be of the same type.
-		is_auto_rec = false
-		rec.typ = rec.typ.deref()
-	}
-
 	params << ast.Param{
 		pos: rec_start_pos
 		name: rec.name
 		is_mut: rec.is_mut
 		is_atomic: is_atomic
 		is_shared: is_shared
-		is_auto_rec: is_auto_rec
 		typ: rec.typ
 		type_pos: rec.type_pos
 	}
