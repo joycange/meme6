@@ -113,6 +113,7 @@ pub enum TypeFlag {
 	generic
 	shared_f
 	atomic_f
+	option_mut_param_t
 }
 
 /*
@@ -1425,7 +1426,7 @@ pub fn (t &Table) type_to_str_using_aliases(typ Type, import_aliases map[string]
 		nr_muls--
 		res = 'atomic ' + res
 	}
-	if nr_muls > 0 && !typ.has_flag(.variadic) {
+	if nr_muls > 0 && !typ.has_flag(.variadic) && !typ.has_flag(.option_mut_param_t) {
 		res = strings.repeat(`&`, nr_muls) + res
 	}
 	if typ.has_flag(.option) {
