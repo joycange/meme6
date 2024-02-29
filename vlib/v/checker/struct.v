@@ -804,8 +804,7 @@ or use an explicit `unsafe{ a[..] }`, if you do not want a copy of the slice.',
 				}
 				if !field.typ.has_flag(.option) && sym.kind == .interface_
 					&& (!has_noinit && sym.language != .js) && !node.has_update_expr {
-					// TODO: should be an error instead, but first `ui` needs updating.
-					c.note('interface field `${type_sym.name}.${field.name}` must be initialized',
+					c.error('interface field `${type_sym.name}.${field.name}` must be initialized',
 						node.pos)
 				}
 				// Do not allow empty uninitialized sum types
