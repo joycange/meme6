@@ -745,10 +745,11 @@ fn (mut c Checker) infix_expr(mut node ast.InfixExpr) ast.Type {
 		else {}
 	}
 	// TODO: Absorb this block into the above single side check block to accelerate.
-	if left_type == ast.bool_type && node.op !in [.eq, .ne, .logical_or, .and] {
+	if c.unwrap_generic(left_type) == ast.bool_type && node.op !in [.eq, .ne, .logical_or, .and] {
 		c.error('bool types only have the following operators defined: `==`, `!=`, `||`, and `&&`',
 			node.pos)
-	} else if left_type == ast.string_type && node.op !in [.plus, .eq, .ne, .lt, .gt, .le, .ge] {
+	} else if c.unwrap_generic(left_type) == ast.string_type
+		&& node.op !in [.plus, .eq, .ne, .lt, .gt, .le, .ge] {
 		// TODO broken !in
 		c.error('string types only have the following operators defined: `==`, `!=`, `<`, `>`, `<=`, `>=`, and `+`',
 			node.pos)
