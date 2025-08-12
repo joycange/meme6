@@ -35,7 +35,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build V
         run: make -j4 && ./v symlink
       - name: Install C2V
@@ -70,7 +70,7 @@ jobs:
       LIBGL_ALWAYS_SOFTWARE: true
       VTMP: /tmp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build V
         run: make -j4 && ./v symlink
       - name: Install C2V
